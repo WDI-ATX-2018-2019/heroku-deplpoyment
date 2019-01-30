@@ -30,31 +30,66 @@
 
 Now that you've partitioned an app on heroku's side, you need to attach a free addon called mongolab. Mongolab provides you with heroku's version of mongodb. Up until now, we've just been using express on local connecting to our local mongodb. Now we need to connect our heroku app onto heroku's version of mongodb.
 - Go to heroku and login, then hit personal apps (https://dashboard.heroku.com/apps), click on your new app, then click on the resources tab.
-	- Search for MongoLab and add the free version `Sandbox`.
+- Search for mLab MongoDB and add the free version `Sandbox`.
 
-## Update code for heroku & mongolab
+
+
+
+## Update code for heroku & mongolab & Environment Variables
+
+- We will have to set up environment variables in order to get our app to run correctly on not only are local machines, but also on the heroku servers as well.  Right now we have two different connection strings for our mongodb.  One for our local environment, and one for the mLab MongoDB lab you just added.  So we are going to use a file that will allow us to define those specific `environment` variables locally and then we will define them on heroku.
+
+1.  `npm install dotenv` [dot env docs](https://www.npmjs.com/package/dotenv)
+2. At the top of your server file put the line `require('dotenv').config()`, this will make our environment variables accessible throughout our entire application.
+3. Now we will create our environment variables that are local to our application.  This could be our db connection string, port number, api keys, etc... So in a very simple case we will create a file called `.env` at the root of our application
+
+*inside of .env*
+```
+MONGODB_URI=mongodb://localhost/blog5
+PORT=3000
+```
+
+Then update your app where ever you may be using these variables, so in the is example 
+
+*db/db.js*
+
+```
+const connectionString = process.env.MONGODB_URI;
+```
+
+*Server*
+```
+app.listen(process.env.PORT, () => {
+  console.log('listening on port 3000');
+})
+```
+
+*Heroku* 
+- The Port and MONGODB_URI will automatically be defined on the heroku servers for you, so locally your values for `process.env.VAR_NAME` will be equal to what you have in your `.env` file. While the values on the heroku servers will be define on heroku, you can check the values on heroku at
+
+1.  your app name
+2.  settings
+3.  then click *reveal config vars* , (you should then see a variable called MONGODB_URI which should be equal to the mLab mongodb addon you did earlier.  
+4.  If you need to add an api key or anything else on heroku this is where you would do it.  
+
 
 Almost done, now all we need to do is make sure we set up our package.json file as well as ensure our code is abstracted to use heroku's services as well as our dev local.
 
 - Edit your package.json file so that the "main" property is set to the name of your main application's entry point js file (probably `server.js`).
 
-We also need to make sure we're ignoring the `node_modules` directory.  If you haven't already, make sure you have a .gitignore file that has in it "node_modules"
-
-We also need to update any instance of code where you're connecting to mongo/mongoose via (mongodb://localhost/databaseName). This can vary based on if where/how often your mongoose has to connect to the DB. For my apps, the following suffices...
-- In my `server.js`
-	`var mongoUri =  process.env.MONGODB_URI || 'mongodb://localhost:27017/grocery_app_dev';`
-
-	`mongoose.connect(mongoUri);`
-
-Last thing, ensure your port is also abstracted to use process.env.PORT or 3000;
-`port = process.env.PORT || 3000;`
+- Inside of your package.json you will also want to add a start script like the following 
 
 ```
-app.listen(port);
-console.log('---------------------------------');
-console.log('Server running on port: ' + port);
-console.log('---------------------------------');
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+
 ```
+
+We also need to make sure we're ignoring the `node_modules` directory.  If you haven't already, make sure you have a .gitignore file that has in it "node_modules", (because your heroku server will install those for you)
+
+
 
 ## Push Git
 
@@ -69,3 +104,6 @@ Wait 1 minute then type `heroku open`. You should have your deployed app open up
 
 - If thing's don't work out, relax and try to find out the error.
 - `heroku logs`
+
+
+- Note if you want to update heroku you will have to push new code up to heroku master
