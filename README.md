@@ -53,12 +53,12 @@ Then update your app where ever you may be using these variables, so in the is e
 
 *db/db.js*
 
-```
+```javascript
 const connectionString = process.env.MONGODB_URI;
 ```
 
 *Server*
-```
+```javascript
 app.listen(process.env.PORT, () => {
   console.log('listening on port 3000');
 })
